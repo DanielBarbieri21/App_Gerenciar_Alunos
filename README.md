@@ -136,8 +136,7 @@ npx react-native run-ios
   "react": "19.2.0",
   "redux": "^5.0.1",
   "react-redux": "^9.2.0",
-  "react-native-sqlite-storage": "^6.0.1",
-  "realm": "^12.16.0",
+   "realm": "^20.2.0",
   "crypto-js": "^4.2.0",
   "@react-navigation/native": "^7.1.26"
 }
@@ -165,7 +164,7 @@ npm run ios
 1. **Cadastrar Aluno**
    - Informar matrícula e nome
    - Dados criptografados automaticamente
-   - Persistência local com SQLite
+   - Persistência local com Realm
 
 2. **Listar Alunos**
    - Visualização em cards
