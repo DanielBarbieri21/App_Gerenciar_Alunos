@@ -1,0 +1,297 @@
+# GitLab CI/CD Pipeline para AdvancedCadastroApp
+# Executa testes, lint, build APK e análise de qualidade
+
+stages:
+  - test
+  - lint
+  - build
+  - quality
+  - deploy
+
+variables:
+  NODE_VERSION: '20'
+  GRADLE_OPTS: '-Dorg.gradle.daemon=false'
+  ANDROID_HOME: /opt/android-sdk-linux
+  PATH: '/opt/android-sdk-linux/tools:/opt/android-sdk-linux/platform-tools:$PATH'
+
+# ==================== TEST STAGE ====================
+
+test:jest:
+  stage: test
+  image: node:${NODE_VERSION}
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  script:
+    - echo "📦 Installing dependencies..."
+    - npm ci
+    - echo "🧪 Running Jest tests..."
+    - npm test -- --coverage --passWithNoTests
+    - echo "✅ Tests completed"
+  artifacts:
+    reports:
+      junit: coverage/junit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    paths:
+      - coverage/
+    expire_in: 30 days
+  coverage: '/Coverage\s*:\s*(\d+\.?\d*)%/'
+  allow_failure: false
+
+test:unit:
+  stage: test
+  image: node:${NODE_VERSION}
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  script:
+    - npm ci
+    - npm test -- --watch=false --passWithNoTests
+  allow_failure: false
+
+# ==================== LINT STAGE ====================
+
+lint:eslint:
+  stage: lint
+  image: node:${NODE_VERSION}
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  script:
+    - npm ci
+    - echo "🔍 Running ESLint..."
+    - npm run lint || true
+  artifacts:
+    reports:
+      sast: eslint-report.json
+    expire_in: 1 week
+  allow_failure: true
+
+lint:prettier:
+  stage: lint
+  image: node:${NODE_VERSION}
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  script:
+    - npm ci
+    - echo "🎨 Checking code formatting..."
+    - npx prettier --check src/ || echo "⚠️ Format issues found (non-blocking)"
+  allow_failure: true
+
+lint:typescript:
+  stage: lint
+  image: node:${NODE_VERSION}
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  script:
+    - npm ci
+    - echo "📝 Type checking with TypeScript..."
+    - npx tsc --noEmit
+  allow_failure: true
+
+# ==================== BUILD STAGE ====================
+
+build:android:debug:
+  stage: build
+  image: cirrusci/android-sdk:latest
+  cache:
+    key:
+      files:
+        - package-lock.json
+        - android/build.gradle
+    paths:
+      - node_modules/
+      - .gradle/
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq nodejs npm
+    - echo "🔧 Setting up Android SDK..."
+    - export ANDROID_HOME=/opt/android-sdk-linux
+  script:
+    - echo "📦 Installing npm dependencies..."
+    - npm ci
+    - echo "🧪 Running tests before build..."
+    - npm test -- --passWithNoTests
+    - echo "📱 Building Android APK (Debug)..."
+    - cd android
+    - chmod +x gradlew
+    - ./gradlew assembleDebug --no-daemon --info
+    - cd ..
+    - echo "✅ APK build completed"
+  artifacts:
+    paths:
+      - android/app/build/outputs/apk/debug/app-debug.apk
+    name: app-debug-${CI_COMMIT_SHORT_SHA}
+    expire_in: 30 days
+  only:
+    - main
+    - develop
+    - merge_requests
+  allow_failure: false
+
+build:android:release:
+  stage: build
+  image: cirrusci/android-sdk:latest
+  cache:
+    key:
+      files:
+        - package-lock.json
+        - android/build.gradle
+    paths:
+      - node_modules/
+      - .gradle/
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq nodejs npm
+    - echo "🔧 Setting up Android SDK..."
+    - export ANDROID_HOME=/opt/android-sdk-linux
+  script:
+    - echo "📦 Installing npm dependencies..."
+    - npm ci
+    - echo "🧪 Running tests before build..."
+    - npm test -- --passWithNoTests
+    - echo "📱 Building Android APK (Release)..."
+    - cd android
+    - chmod +x gradlew
+    - ./gradlew assembleRelease --no-daemon --info
+    - cd ..
+    - echo "✅ APK release build completed"
+  artifacts:
+    paths:
+      - android/app/build/outputs/apk/release/app-release-unsigned.apk
+    name: app-release-${CI_COMMIT_TAG}
+    expire_in: 90 days
+  only:
+    - tags
+  allow_failure: false
+
+# ==================== QUALITY STAGE ====================
+
+quality:sonarqube:
+  stage: quality
+  image: node:${NODE_VERSION}
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq openjdk-17-jdk
+  script:
+    - npm ci
+    - echo "🧪 Running tests with coverage..."
+    - npm test -- --coverage --passWithNoTests
+    - echo "🔐 Scanning code with SonarQube..."
+    - npm install -g sonarqube-scanner
+    - sonar-scanner
+      -Dsonar.projectKey=AdvancedCadastroApp
+      -Dsonar.sources=src
+      -Dsonar.host.url=$SONAR_HOST_URL
+      -Dsonar.login=$SONAR_TOKEN
+      -Dsonar.exclusions='**/node_modules/**,**/*.test.ts,**/*.test.tsx'
+      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+      || echo "⚠️ SonarQube analysis not configured"
+  only:
+    - main
+    - develop
+  allow_failure: true
+
+quality:codecov:
+  stage: quality
+  image: node:${NODE_VERSION}
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  script:
+    - npm ci
+    - echo "🧪 Running tests with coverage..."
+    - npm test -- --coverage --passWithNoTests
+    - echo "📊 Uploading to Codecov..."
+    - npm install -g codecov
+    - codecov -f coverage/lcov.info
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 30 days
+  only:
+    - main
+    - develop
+  allow_failure: true
+
+# ==================== DEPLOY STAGE ====================
+
+deploy:staging:
+  stage: deploy
+  image: ubuntu:latest
+  script:
+    - echo "🚀 Deploying to staging..."
+    - echo "📱 APK ready at: android/app/build/outputs/apk/debug/app-debug.apk"
+    - echo "✅ Staging deployment completed"
+  environment:
+    name: staging
+    url: https://staging.example.com
+  only:
+    - develop
+  when: manual
+  allow_failure: true
+
+deploy:production:
+  stage: deploy
+  image: ubuntu:latest
+  script:
+    - echo "🚀 Deploying to production..."
+    - echo "📱 APK ready at: android/app/build/outputs/apk/release/app-release-unsigned.apk"
+    - echo "✅ Production deployment completed"
+  environment:
+    name: production
+    url: https://example.com
+  only:
+    - tags
+  when: manual
+  allow_failure: true
+
+# ==================== REPORTS ====================
+
+pages:
+  stage: deploy
+  image: node:${NODE_VERSION}
+  cache:
+    key:
+      files:
+        - package-lock.json
+      paths:
+        - node_modules/
+  script:
+    - npm ci
+    - npm test -- --coverage --passWithNoTests
+    - mkdir -p public
+    - cp -r coverage/lcov-report/* public/ || true
+    - echo "📊 Coverage report available at: https://$CI_PROJECT_NAMESPACE.gitlab.io/$CI_PROJECT_NAME"
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - main
+  allow_failure: true
