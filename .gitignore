@@ -219,3 +219,5 @@ GoogleService-Info.plist
 
 # ==================== METRO ====================
 watchman.log
+
+.fake
