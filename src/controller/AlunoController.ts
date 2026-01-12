@@ -56,6 +56,23 @@ export default class AlunoController extends GenericController<Aluno, string> {
     }
   }
 
+  async atualizar(aluno: Aluno): Promise<void> {
+    try {
+      // Criptografa o nome do aluno antes de atualizar
+      const alunoEncriptado = new Aluno(
+        aluno.matricula,
+        encrypt(aluno.nome),
+        aluno.registro
+      );
+      
+      await this.dao.atualizar(alunoEncriptado);
+      console.log('Aluno atualizado com sucesso (nome criptografado)');
+    } catch (error) {
+      console.error('Erro ao atualizar aluno:', error);
+      throw new Error('Não foi possível atualizar o aluno');
+    }
+  }
+
   async buscarPorMatricula(matricula: string): Promise<Aluno | null> {
     try {
       const alunos = await this.listar();

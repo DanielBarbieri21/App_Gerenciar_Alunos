@@ -9,9 +9,10 @@ import { Aluno } from '../../model/entities/Aluno';
 interface AlunoItemProps {
   aluno: Aluno;
   onDelete: (matricula: string) => void;
+  onEdit: (aluno: Aluno) => void;
 }
 
-const AlunoItem: React.FC<AlunoItemProps> = ({ aluno, onDelete }) => {
+const AlunoItem: React.FC<AlunoItemProps> = ({ aluno, onDelete, onEdit }) => {
   const formatDate = (date: Date): string => {
     return new Date(date).toLocaleDateString('pt-BR');
   };
@@ -29,12 +30,22 @@ const AlunoItem: React.FC<AlunoItemProps> = ({ aluno, onDelete }) => {
           📅 Cadastro: {formatDate(aluno.registro)}
         </Text>
       </View>
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => onDelete(aluno.matricula)}
-      >
-        <Text style={styles.deleteText}>🗑️</Text>
-      </TouchableOpacity>
+      
+      <View style={styles.actions}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => onEdit(aluno)}
+        >
+          <Text style={styles.editText}>✏️</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => onDelete(aluno.matricula)}
+        >
+          <Text style={styles.deleteText}>🗑️</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -81,6 +92,21 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     color: '#666',
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  editButton: {
+    backgroundColor: '#4CAF50',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editText: {
+    fontSize: 20,
   },
   deleteButton: {
     padding: 8,
