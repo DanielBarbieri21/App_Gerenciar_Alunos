@@ -8,6 +8,6 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^realm$': '<rootDir>/__mocks__/realm.ts',
-    '^react-native-toast-message$': '<rootDir>/__mocks__/react-native-toast-message.ts',
+    '^react-native-toast-message$': '<rootDir>/__mocks__/react-native-toast-message.js',
   },
 };
