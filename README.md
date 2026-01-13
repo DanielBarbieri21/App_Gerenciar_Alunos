@@ -333,13 +333,18 @@ Este projeto foi desenvolvido para fins acadêmicos.
 
 ---
 
-## 👨‍💻 Autor
+---
 
-**Daniel Silva**
+🛠️ **Software desenvolvido por Daniel Barbieri**  
+Engenheiro de Software | Full Stack Developer  
 
-- 📧 Email: contato@exemplo.com
-- 📱 LinkedIn: [linkedin.com/in/seu-perfil](https://linkedin.com)
-- 🐙 GitHub: [github.com/seu-usuario](https://github.com)
+Código construído com foco em eficiência, organização, escalabilidade e boas práticas de desenvolvimento.
+
+🌐 GitHub: https://github.com/DanielBarbieri21  
+💼 LinkedIn: https://www.linkedin.com/in/daniel-barbieri-4990462a/
+
+---
+
 
 ---
 
