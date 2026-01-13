@@ -46,10 +46,13 @@ jobs:
         run: npm test -- --passWithNoTests
 
       - name: 📱 Setup Android SDK
-        uses: android-actions/setup-android@v2
-        with:
-          api-level: 33
-          build-tools-version: 33.0.0
+        env:
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          sudo mkdir -p $ANDROID_SDK_ROOT
+          sudo chown -R runner:runner $ANDROID_SDK_ROOT
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
 
       - name: ⚙️ Configure Gradle
         run: |
