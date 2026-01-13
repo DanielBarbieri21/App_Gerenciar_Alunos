@@ -361,7 +361,7 @@ Código construído com foco em eficiência, organização, escalabilidade e boa
 
 **⭐ Se este projeto foi útil, considere dar uma estrela!**
 
-Feito com ❤️ e ☕ em 2026
+
 
 </div>
 
