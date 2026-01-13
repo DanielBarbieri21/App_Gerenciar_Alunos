@@ -68,11 +68,11 @@ jobs:
       - name: 🧹 Free disk space (After)
         if: always()
         run: |
-          rm -rf ~/.gradle
-          rm -rf /root/.gradle
-          rm -rf android/build
-          rm -rf android/app/build/intermediates
-          rm -rf android/app/build/.gradle
+          rm -rf ~/.gradle || true
+          sudo rm -rf /root/.gradle || true
+          rm -rf android/build || true
+          rm -rf android/app/build/intermediates || true
+          rm -rf android/app/build/.gradle || true
           df -h
 
       - name: 📦 Upload APK artifact
